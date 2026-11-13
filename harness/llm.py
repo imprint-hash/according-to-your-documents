@@ -54,7 +54,10 @@ def _post(url: str, headers: dict, body: dict, timeout: int = 120) -> dict:
         return json.load(r)
 
 
-def chat(model_key: str, system: str, user: str, *, temperature: float = 0.0, max_tokens: int = 700) -> tuple[str, dict]:
+def chat(model_key: str, system: str, user: str, *, temperature: float = 0.0, max_tokens: int = 700,
+         history: list[tuple[str, str]] | None = None) -> tuple[str, dict]:
+    """history: earlier turns as (role, text) with role 'user' or 'assistant'; `user` is the final turn."""
+    turns = [{"role": r, "content": t} for r, t in (history or [])] + [{"role": "user", "content": user}]
     provider, model = MODELS[model_key]
     pace = MODEL_PACE.get(model_key, PACE[provider])
     wait = pace - (time.time() - _last.get(provider, 0))
@@ -68,7 +71,7 @@ def chat(model_key: str, system: str, user: str, *, temperature: float = 0.0, ma
                           {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"},
                           {"model": model, "max_tokens": max_tokens, "temperature": temperature,
                            "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-                           "messages": [{"role": "user", "content": user}]})
+                           "messages": turns})
                 text = "".join(b.get("text", "") for b in d.get("content", []) if b.get("type") == "text")
                 return text, {"usage": d.get("usage"), "stop": d.get("stop_reason")}
             if provider in ("gemini", "groq"):
@@ -76,14 +79,14 @@ def chat(model_key: str, system: str, user: str, *, temperature: float = 0.0, ma
                        else "https://api.groq.com/openai/v1/chat/completions")
                 key = os.environ["GEMINI_API_KEY" if provider == "gemini" else "GROQ_API_KEY"]
                 body = {"model": model, "temperature": temperature, "max_tokens": max_tokens,
-                        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+                        "messages": [{"role": "system", "content": system}] + turns}
                 d = _post(url, {"Authorization": f"Bearer {key}"}, body)
                 msg = d["choices"][0]["message"]
                 return (msg.get("content") or ""), {"usage": d.get("usage"), "stop": d["choices"][0].get("finish_reason")}
             if provider == "adaption":
                 d = _post("https://api.prod.adaptionlabs.ai/api/v1/responses",
                           {"Authorization": f"Bearer {os.environ['ADAPTION_API_KEY']}"},
-                          {"model": model, "instructions": system, "input": user,
+                          {"model": model, "instructions": system, "input": turns if history else user,
                            "temperature": temperature, "max_output_tokens": max(max_tokens, 4000)})
                 # only the final message the user would see; skip private reasoning items
                 text = "".join(c.get("text", "") for o in d.get("output", []) if o.get("type") == "message"
