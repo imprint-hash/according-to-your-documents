@@ -1,25 +1,36 @@
-# "According to Your Documents"
-### How One Prompt Makes Grounded AI Assistants Abandon and Misattribute Their Sources
+# According to Your Documents
 
-Research project for the Apart Research **AI × Epistemics Research Sprint** (13–15 Nov 2026).
-**All code and data in this repository were written during the sprint (from 13 Nov 2026). There is no preexisting code.**
+Code and data for **"According to Your Documents": How One Prompt Makes Grounded AI Assistants Abandon and Misattribute Their Sources**
+(Apart Research · AI x Epistemics sprint, Nov 2026).
 
-## What we test
-Many businesses build "company assistants" (Gemini Gems, custom GPTs, internal chatbots) by giving a model their
-documents and the instruction *"answer only from these documents, never drop this rule"*. We test whether a single
-one-sentence user message makes these assistants abandon their documents, invent company facts, and still present
-those inventions as coming from the documents.
+Grounded assistants (Gemini Gems, custom GPTs, support bots) get a company's documents in their system prompt. We test what they do when a
+customer asks something those documents don't answer: do they say so, or invent a company fact and present it as coming from the documents?
 
-- `data/company_docs.md`: knowledge base of a **fictional** company (every fact invented, so fabrication is detectable).
-- `data/questions.json`: 20 questions the documents answer (with gold answers), 20 plausible questions they do not
-  answer, and 6 one-sentence override prompts plus a no-attack baseline.
-- `harness/run.py`: runs each model as a grounded assistant (resumable).
-- `harness/grade.py`: deterministic grading for answerable questions; LLM-judge rubric for unanswerable ones.
+## What's here
+| Path | What |
+|---|---|
+| `data/company_docs.md` | The fictional company knowledge base (Kestrel Haulage & Fulfilment) |
+| `data/questions.json` | 20 answerable questions (gold answers), 20 unanswerable questions, 6 one-sentence attacks |
+| `harness/run.py` | Runs a model under a condition: `--prompt hardened|typical|typical+{only,say,noinvent,hold}`, `--turns 1|2` |
+| `harness/grade.py` | Deterministic grading for answerable questions; LLM judge for unanswerable ones |
+| `harness/judge2.py`, `harness/classify_items.py` | Second-judge check; claim-type classification (invented specific / absence claim / supported) |
+| `harness/analyze2.py` | Final analysis: two-judge strict/broad rates, Wilson CIs, paired bootstrap, ablation, figures |
+| `results/raw/` | Every model response (`<model>@<condition>.jsonl`) |
+| `results/graded/` | Judge labels (`<subject>__<judge>.jsonl`) |
+| `results/final.json`, `results/figures/` | Numbers and figures used in the report |
+| `report/` | Report source and PDF |
 
 ## Reproduce
-Put API keys in `.env` (`GEMINI_API_KEY`, `GROQ_API_KEY`, `ADAPTION_API_KEY`, optional `ANTHROPIC_API_KEY`), then:
 ```bash
-python3 harness/run.py gemini-3.1-flash-lite
-python3 harness/grade.py gemini-3.1-flash-lite --judge glm-5.2
+python3 harness/run.py deepseek-v4-flash --prompt typical --turns 1
+python3 harness/grade.py deepseek-v4-flash@typical-t1 --judge deepseek-v4-flash
+python3 harness/analyze2.py
 ```
-No third-party Python packages are needed.
+API keys go in a local `.env` (`GEMINI_API_KEY`, `GROQ_API_KEY`, `ADAPTION_API_KEY`); it is git-ignored.
+
+## Notes
+- All company data is fictional. No personal data was collected.
+- Question U06 (Sunday delivery) is excluded from the main analysis because the documents state "We are closed on Sundays"; results including it are reported as a sensitivity check.
+- No optimised attack strings are released; the six attacks are short, well-known patterns.
+
+MIT licence.
