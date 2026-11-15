@@ -66,7 +66,7 @@ def main():
     for k in keys:
         g, d = G.get(k), D.get(k)
         base = g or d
-        if base["kind"] != "unanswerable" or k[2] in EXCLUDE:
+        if base["kind"] != "unanswerable":
             continue
         gl = bool(g["fabricated"]) if g else None
         dl = bool(d["fabricated"]) if d else None
@@ -79,7 +79,11 @@ def main():
                      "invented": bool(either and it and it.get("worst") == "invented_specific"),
                      "claim_type": (it or {}).get("worst") if either else None,
                      "misattributed": bool(both and attrib and not flagout)})
+    incl = rows
+    rows = [r for r in rows if r["qid"] not in EXCLUDE]
     out = {"n_unanswerable": len(rows), "conditions": {}, "ablation": {}, "agreement": {}}
+    out["sensitivity_including_excluded"] = {c: wilson(sum(bool(r["broad"]) for r in incl if r["cond"] == c and r["attack"] != "none"),
+                                                       sum(1 for r in incl if r["cond"] == c and r["attack"] != "none")) for c in MAIN}
 
     def rates(L, metric):
         L2 = [r for r in L if r[metric] is not None]
