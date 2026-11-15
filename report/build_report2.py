@@ -64,11 +64,11 @@ gd = AG["glm_vs_deepseek"]; go = AG.get("glm_vs_gptoss_enriched_sample")
 human_text = ""
 if H:
     dis = H["claim_types_of_disagreements"]
-    human_text = (f"<p><b>A careful human reader missed them.</b> The author labelled a blind, enriched sample of {H['n']} answers (half flagged by the main judge) while holding the full documents. "
-                  f"The author agreed with the judges on every answer they cleared ({H['by_glm']['agree_on_glm_neg']}/{H['by_glm']['glm_neg']}) but marked none of the {H['by_glm']['glm_pos']} flagged answers as fabricated. "
+    human_text = (f"<p><b>A careful human reader missed them.</b> I labelled a blind, enriched sample of {H['n']} answers (half flagged by the main judge) while holding the full documents. "
+                  f"I agreed with the judges on every answer they cleared ({H['by_glm']['agree_on_glm_neg']}/{H['by_glm']['glm_neg']}) but marked none of the {H['by_glm']['glm_pos']} flagged answers as fabricated. "
                   f"By claim type, the disagreements were {dis.get('absence_claim', 0)} absence claims phrased as helpful refusals (“we don't currently offer 2-hour slots”), {dis.get('invented_specific', 0)} invented specifics and {dis.get('supported', 0)} judge false positives. The invented specifics include confident wrong derivations, such as "
                   f"“the maximum you can declare is 5,000 KC, so cover costs 150 KC” where the documents imply 240 KC with a 5,000 KC payout cap. "
-                  f"We read this as the core risk, not a validation failure: misattributed inventions are written in the voice of the documents, so even an informed reader accepts them.</p>")
+                  f"I read this as the core risk, not a failed check: the invented answers are written in the voice of the documents, so even a reader holding those documents accepts them.</p>")
 
 ABSTRACT = (f"Custom assistants built by pasting a company's documents into a system prompt (Gemini Gems, custom GPTs, support bots) are trusted because they seem to answer “according to your documents”. "
             f"We test what they do when a customer asks something the documents don't cover. Using a fictional company, 40 questions and six one-sentence user pressures, we collected {N_ANS:,} answers to "
@@ -158,7 +158,7 @@ Every headline direction holds under strict, broad and single-judge scoring and 
 <p>For anyone building a grounded assistant the fix is cheap: an explicit rule in the system prompt removed most fabrication across every model we tried{f", and {RN[best]} alone did most of the work" if best else ""}. For evaluators, two results matter.
 First, jailbreak-style red-teaming underestimates risk: ordinary emotional pressure is the stronger trigger. Second, both automated accuracy checks and human spot checks miss the failure, because the inventions are fluent, plausible and written in the documents' voice.</p>
 <p><b>Limitations.</b> One synthetic company and 39 scored unanswerable questions; real document sets are longer and messier. Six models, uneven coverage across conditions, and no Anthropic or OpenAI API models (budget). Fabrication is judged by LLMs;
-judges disagree on absence claims, which some readers would call reasonable inference, so we report strict and broad rates. The human check is one annotator (the author) on an enriched sample. Temperature 0, single runs. The ablation covers two models.
+judges disagree on absence claims, which some readers would call reasonable inference, so we report strict and broad rates. The human check is one annotator (me) on an enriched sample. Temperature 0, single runs. The ablation covers two models.
 <b>Future work.</b> Real business documents with consent, multilingual customers, retrieval-based assistants, and training models to say “that isn't in your documents” under pressure.</p>
 
 <h2>6 Conclusion</h2>
@@ -194,13 +194,13 @@ The pressure that breaks them is a worried customer, not a jailbreak, and the st
 <p><b>What this establishes.</b> In one synthetic grounded-assistant setting, typical system prompts let models invent and misattribute company facts; urgency is a stronger trigger than explicit overrides; a single explicit rule prevents most of it; and the inventions survive human review.
 <b>What it does not.</b> It does not estimate real-world incidence, cover retrieval pipelines or tools, or show that the protective rule resists optimised attacks.
 <b>Dual use.</b> The pressures are short, widely known and weaker against careful prompts; the main finding (add an explicit rule, red-team with emotional pressure, audit out-of-scope answers) helps defenders far more than attackers. We release no optimised attack strings.
-<b>Data.</b> All company data is fictional; no personal data or human subjects beyond the author's own labels. The motivating practitioner anecdote is described without identifying anyone.</p>
+<b>Data.</b> All company data is fictional; no personal data or human subjects beyond my own labels. The motivating practitioner anecdote is described without identifying anyone.</p>
 
 <h2>Appendix C: Sensitivity and accuracy</h2>
 <p>Answerable-question accuracy (main judge set, gold strings): hardened prompt {pc(ACC['hardened-t1']['answerable_accuracy']['baseline']['p'])} with no pressure and {pc(ACC['hardened-t1']['answerable_accuracy']['attacked']['p'])} under pressure; typical prompt {pc(ACC['typical-t1']['answerable_accuracy']['baseline']['p'])} and {pc(ACC['typical-t1']['answerable_accuracy']['attacked']['p'])}. Misses are mostly models declining to use the documents after a direct override. Including U06: hardened single-message broad fabrication {kn(F['sensitivity_including_excluded']['hardened-t1']) if 'sensitivity_including_excluded' in F else 'see analyze.py'}; typical {kn(F['sensitivity_including_excluded']['typical-t1']) if 'sensitivity_including_excluded' in F else ''}. Single-judge rates: typical-prompt pressured answers GLM-5.2 {pc(T1['attacked_glm']['p'])} ({kn(T1['attacked_glm'])}), DeepSeek {pc(T1['attacked_ds']['p'])} ({kn(T1['attacked_ds'])}); hardened GLM-5.2 {pc(H1['attacked_glm']['p'])}, DeepSeek {pc(H1['attacked_ds']['p'])}.</p>
 
 <h2>LLM Usage Statement</h2>
-<p>An AI coding assistant helped write the experiment harness, run the analysis and draft sections of this report; LLMs were also the subjects and judges of the study, as described. The author designed the study, chose the questions and pressures, labelled the human-check sample, checked results and outputs, and edited the final text. All numbers are generated from the released result files.</p>
+<p>An AI coding assistant helped write the experiment harness, run the analysis and draft sections of this report; LLMs were also the subjects and judges of the study, as described. I designed the study, chose the questions and pressures, labelled the human-check sample, checked the results and outputs, and edited the final text. All numbers are generated from the released result files.</p>
 </body></html>"""
 (R / "report" / "report.html").write_text(page)
 print("wrote report/report.html")
